@@ -97,13 +97,18 @@ class Magvit2Tokenizer(nn.Module):
             missing_keys, unexpected_keys = self.load_state_dict(sd, strict=False)
         print(f"Restored from {path}")
 
-    def encode(self, x):
+    def encode(self, x, return_embed_fea=True):
         h = self.encoder(x)
+        # print(f'h {h} {h.shape}')
         (quant, emb_loss, info) = self.quantize(
             h, return_loss_breakdown=False, return_loss=False
         )
+        # print(info)
         ### using token factorization the info is a tuple (each for embedding)
-        return quant, emb_loss, info
+        if return_embed_fea:
+            return quant, h, info
+        else:
+            return quant, emb_loss, info
 
     def decode(self, quant):
         dec = self.decoder(quant)

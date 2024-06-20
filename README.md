@@ -32,18 +32,18 @@ pip install imagetokenizer
 Here's a quick example of how to use OmniTokenizer:
 
 ```python
-from imagetokenizer import OmniTokenizer
+from imagetokenizer import Magvit2Tokenizer
 
 # Initialize the tokenizer
-image_tokenizer = OmniTokenizer()
+image_tokenizer = Magvit2Tokenizer()
 
 # Tokenize an image
-image_tokens = image_tokenizer.encode("path_to_your_image.jpg")
+quants, embedding, codebook_indices = image_tokenizer.encode("path_to_your_image.jpg")
 
 # Print the tokens
 print(image_tokens)
 
-image = image_tokenizer.decode(image_tokens)
+image = image_tokenizer.decode(quants)
 ```
 
 ### Documentation

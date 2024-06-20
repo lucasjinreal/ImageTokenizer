@@ -83,7 +83,9 @@ def main(args):
     images = image.float().to(DEVICE)
     print(f"images: {images.shape}")
 
-    reconstructed_images = model(images)
+    quant, embedding, codebook_indices = model.encode(images)
+    print(f"quant: {quant.shape}")
+    reconstructed_images = model.decode(quant)
 
     image = images[0]
     reconstructed_image = reconstructed_images[0]
