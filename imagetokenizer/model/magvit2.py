@@ -10,7 +10,7 @@ import torch
 from ..quantize.lookup_free_quantize import LFQ
 
 
-class VQModel(nn.Module):
+class Magvit2Tokenizer(nn.Module):
 
     def __init__(
         self,
