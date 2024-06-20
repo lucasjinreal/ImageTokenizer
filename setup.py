@@ -77,7 +77,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],
-    find_packages="",
+    packages=["imagetokenizer"],
     # entry_points={"console_scripts": ["alfred = alfred.alfred:main"]},
     include_package_data=True,
     author="Lucas Jin",
