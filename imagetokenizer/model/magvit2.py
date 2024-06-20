@@ -15,6 +15,7 @@ class Magvit2Tokenizer(nn.Module):
     def __init__(
         self,
         resolution=128,
+        num_down=4,
         ### Quantize Related
         n_embed=262144,
         embed_dim=18,
@@ -36,6 +37,10 @@ class Magvit2Tokenizer(nn.Module):
             "ch_mult": [1, 2, 2, 4],  # num_down = len(ch_mult)-1
             "num_res_blocks": 2,
         }
+        if num_down == 4:
+            ddconfig["ch_mult"] = [1, 1, 2, 2, 4]  # num_down = len(ch_mult)-1
+        elif num_down == 3:
+            ddconfig["ch_mult"] = [1, 2, 2, 4]  # num_down = len(ch_mult)-1
         if ckpt_path and "256" in ckpt_path:
             ddconfig["resolution"] = 256
         self.use_ema = use_ema
