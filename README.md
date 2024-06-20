@@ -2,6 +2,9 @@
 
 Welcome to the **ImageTokenizer** repository! 🎉 This Python package is designed to simplify the process of image and video tokenization, a crucial step for various applications such as image/video generation and understanding. We provide a variety of popular tokenizers with a simple and unified interface, making your coding experience seamless and efficient. 🛠️
 
+> ⚠️💡 Note that this project is still in its early stages of development. We welcome any contributions from the community to help us improve and expand the package. Please make sure **star** and **fork** the repository if you find it useful. We are tacking on some awesome applications with `imagetokenizer` such as image/video generation and understanding. Stay tuned!
+
+
 ## Features
 
 - **Unified Interface**: A consistent API for all supported tokenizers.
