@@ -99,7 +99,7 @@ def main(args):
 def get_args():
     parser = argparse.ArgumentParser(description="inference parameters")
     parser.add_argument("--ckpt_path", required=True, type=str)
-    parser.add_argument("--num_down", default=4, type=int)
+    parser.add_argument("--num_down", default=3, type=int)
     parser.add_argument(
         "--batch_size", default=1, type=int
     )  ## inference only using 1 batch size

@@ -13,3 +13,5 @@ __pycache__/vendor/
 upload_tpi.sh
 __pycache__/
 *.egg-info/
+checkpoints/
+results/
