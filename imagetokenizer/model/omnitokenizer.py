@@ -10,16 +10,46 @@ from einops import rearrange, repeat, pack, unpack
 from einops.layers.torch import Rearrange
 
 from imagetokenizer.model.modules.vae import DiagonalGaussianDistribution
-from ..utils.omnitokenizer_utils import logits_laplace, pair, Normalize, SiLU, divisible_by
+from ..utils.omnitokenizer_utils import (
+    logits_laplace,
+    pair,
+    Normalize,
+    SiLU,
+    divisible_by,
+)
 from .modules.omni_transformer import Transformer
 from timm.models.layers import trunc_normal_
 import torch.utils.checkpoint as checkpoint
 from ..quantize.vector_quantize import VectorQuantize
+from argparse import Namespace
+from .modules.omni_codebook import Codebook
 
 
 class OmniTokenizer(nn.Module):
-    def __init__(self, args):
+    def __init__(
+        self,
+        embedding_dim=512,
+        n_codes=8192,
+        spatial_depth=4,
+        resolution=320,
+        patch_size=8,
+        temporal_patch_size=4,
+    ):
         super().__init__()
+        args = Namespace(
+            embedding_dim=embedding_dim, n_codes=n_codes, spatial_depth=spatial_depth,
+            use_checkpoint=True, resolution=resolution, patch_size=patch_size,
+            temporal_patch_size=temporal_patch_size,
+            casual_in_temporal_transformer=False,
+            casual_in_peg=False, heads=8, attn_dropout=0.0, ff_dropout=0.0,
+            image_channels=3, norm_type='batch', patch_embed='linear', temporal_depth=4,
+            dim_head=64, ff_mult=4.0, sequence_length=17, use_external_codebook=False,
+            codebook_dim=8, no_random_restart=True, restart_thres=1.0,
+            l2_code=True, apply_allframes=False, gan_feat_weight=4,
+            image_gan_weight=1.0, perceptual_weight=4.0, video_gan_weight=1.0,
+            recon_loss_type='l1', l1_weight=4.0,
+            grad_accumulates=1, 
+        )
         self.args = args
         self.embedding_dim = args.embedding_dim
         self.n_codes = args.n_codes
@@ -186,7 +216,6 @@ class OmniTokenizer(nn.Module):
         if not hasattr(args, "activation_in_disc"):
             args.activation_in_disc = "leaky_relu"
 
-
         self.image_gan_weight = args.image_gan_weight
         self.video_gan_weight = args.video_gan_weight
 
@@ -199,16 +228,16 @@ class OmniTokenizer(nn.Module):
 
         self.recon_loss_type = args.recon_loss_type
         self.l1_weight = args.l1_weight
-        self.save_hyperparameters()
+        # self.save_hyperparameters()
 
         self.automatic_optimization = False
         self.grad_accumulates = args.grad_accumulates
-        self.grad_clip_val = args.grad_clip_val
+        # self.grad_clip_val = args.grad_clip_val
 
         if not hasattr(args, "grad_clip_val_disc"):
             args.grad_clip_val_disc = 1.0
 
-        self.grad_clip_val_disc = args.grad_clip_val_disc
+        self.grad_clip_val_disc = 1.0
 
         if not hasattr(args, "disloss_check_thres"):
             args.disloss_check_thres = None
@@ -239,7 +268,7 @@ class OmniTokenizer(nn.Module):
         )
         return tuple([s // d for s, d in zip(input_shape, self.args.downsample)])
 
-    def encode(self, x, is_image, include_embeddings=False):
+    def encode(self, x, is_image=True, include_embeddings=False):
         h = self.pre_vq_conv(self.encoder(x, is_image))
 
         if not self.use_vae:
@@ -260,7 +289,7 @@ class OmniTokenizer(nn.Module):
             else:
                 return z
 
-    def decode(self, encodings, is_image):
+    def decode(self, encodings, is_image=True):
         if not self.use_vae:
             z = F.embedding(encodings, self.codebook.embeddings)
             if is_image:

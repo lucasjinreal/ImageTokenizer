@@ -15,16 +15,23 @@ from PIL import Image
 import argparse
 import torchvision.transforms as T
 from imagetokenizer.model.magvit2 import Magvit2Tokenizer
+from imagetokenizer.model.omnitokenizer import OmniTokenizer
 
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def load_vqgan_new(num_down, ckpt_path=None, is_gumbel=False):
-    model = Magvit2Tokenizer(num_down=num_down, use_ema=True)
-    if ckpt_path is not None:
-        sd = torch.load(ckpt_path, map_location="cpu")["state_dict"]
-        missing, unexpected = model.load_state_dict(sd, strict=False)
+    if 'magvit2' in ckpt_path.lower():
+        model = Magvit2Tokenizer(num_down=num_down, use_ema=True)
+        if ckpt_path is not None:
+            sd = torch.load(ckpt_path, map_location="cpu")["state_dict"]
+            missing, unexpected = model.load_state_dict(sd, strict=False)
+    elif 'omni' in ckpt_path.lower():
+        model = OmniTokenizer()
+        if ckpt_path is not None:
+            sd = torch.load(ckpt_path, map_location="cpu")["state_dict"]
+            missing, unexpected = model.load_state_dict(sd, strict=False)
     return model.eval()
 
 
@@ -55,6 +62,17 @@ def custom_to_pil(x):
     return x
 
 
+def get_image_tensor_for_encoder(image):
+    image = image / 127.5 - 1.0
+    image = T.ToTensor()(image).unsqueeze(0)
+    # reshape the image to closest multiple 8 size
+    height, width = image.shape[2], image.shape[3]    
+    new_height = ((height + 7) // 8) * 8    
+    new_width = ((width + 7) // 8) * 8    # 调整图像大小    
+    image = torch.nn.functional.interpolate(image, size=(new_height, new_width), mode='bilinear', align_corners=False)
+    return image
+
+
 def main(args):
     model = load_vqgan_new(args.num_down, args.ckpt_path).to(DEVICE)
 
@@ -76,18 +94,19 @@ def main(args):
     idx = os.path.basename(img_f)[:-4] + "_constructed"
     image_raw = Image.open(img_f)
     image = np.array(image_raw)
-    image = image / 127.5 - 1.0
-    image = T.ToTensor()(image).unsqueeze(0)
-    print(image.shape)
+    print(f'original image size: {image.shape}')
+    images_tensor = get_image_tensor_for_encoder(image)
     # images = image.permute(0, 3, 1, 2).to(DEVICE)
-    images = image.float().to(DEVICE)
-    print(f"images: {images.shape}")
+    images_tensor = images_tensor.float().to(DEVICE)
+    print(f"images: {images_tensor.shape}")
 
-    quant, embedding, codebook_indices = model.encode(images)
+    quant, embedding, codebook_indices = model.encode(images_tensor)
     print(f"quant: {quant.shape}")
+    print(f"embedding: {embedding.shape}")
+    print(f"codebook_indices: {codebook_indices.shape}")
     reconstructed_images = model.decode(quant)
 
-    image = images[0]
+    image = images_tensor[0]
     reconstructed_image = reconstructed_images[0]
 
     image = custom_to_pil(image)
@@ -102,11 +121,10 @@ def get_args():
     parser = argparse.ArgumentParser(description="inference parameters")
     parser.add_argument("--ckpt_path", required=True, type=str)
     parser.add_argument("--num_down", default=3, type=int)
-    parser.add_argument(
-        "--batch_size", default=1, type=int
-    )  ## inference only using 1 batch size
+    parser.add_argument("--batch_size", default=1, type=int)  
     parser.add_argument("--image_file", default="images/a.jpg", type=str)
     parser.add_argument("--subset", default=None)
+    parser.add_argument("--tokenizer", default='magvit2')
 
     return parser.parse_args()
 
