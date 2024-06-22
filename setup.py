@@ -84,5 +84,5 @@ setup(
     author_email="jinfagang19@163.com",
     url="https://github.com/lucasjinreal/ImageTokenizer",
     platforms="any",
-    install_requires=['beartype'],
+    install_requires=["beartype"],
 )

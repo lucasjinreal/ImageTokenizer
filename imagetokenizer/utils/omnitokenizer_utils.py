@@ -30,6 +30,7 @@ def shift_dim(x, src_dim=-1, dest_dim=-1, make_contiguous=True):
         x = x.contiguous()
     return x
 
+
 def Normalize(in_channels, norm_type="group"):
     assert norm_type in ["group", "batch"]
     if norm_type == "group":

@@ -10,6 +10,14 @@ Welcome to the **ImageTokenizer** repository! 🎉 This Python package is design
 - **Unified Interface**: A consistent API for all supported tokenizers.
 - **Extensive Support**: Covers a range of popular image and video tokenizers.
 - **Easy Integration**: Quick setup and integration with your projects.
+- **Different ImageTokenizers**: Support Magvit2, OmniTokenizer, Titok etc.
+
+
+## Updates
+
+- 🔥**2024.06.22**: Titok were supported now! **This most minimal tokens num tokenizer as for now**;
+- 🔥**2024.06.22**: OmniTokenizer supported now!
+
 
 ## Supported Tokenizers
 
